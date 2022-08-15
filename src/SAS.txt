@@ -1,0 +1,86 @@
++January
+AFI 10-201 - Force Readiness Reporting (Unit Responsibilities)
+AFI 48-122 Deployment Health, Unit Commander
+AFI 48-133 Duty Limiting Conditions - Unit Commander
+AFI 10-250 Individual Medical Readiness- Unit Commander
+AFI 10-403 Deployment Planning and Execution (Effective: 17 Apr 20)
+Xend
+
++February
+Government Travel Card Cross Functional APC HL4-7
+Resource Management Communicator for Commanders, Resource Center Managers, and Resource Advisors
+Squadron Commander Activities and Functions
+AFI 33-332 AF Privacy and Civil Liberties
+AFMAN 17-1203 - Information Technology Asset Management - Hardware Unit Accountable Property Officer (APO)
+AFMAN 17-1203 - Information Technology Asset Management - Hardware Unit Accountable Property Officer (APO) [AFMAN 17-1203 APO for Software Lisence Manager]
+Xend
+
++March
+AFI 36-2670 Unit Training Program
+2021 67 CW Safety Program
+AFI 90-5001 Suicide Prevention By Law ACC SAC (Unit)
+DAFMAN 36-2905 Department of the Air Force Physical Fitness Program_UFAC
+AFI 17-101 Risk Management Framework
+Xend
+
++April
+MPTO 00-33A-1001, General Cyberspace Support Activities--Quality Assurance
+AFI 14-404, Intelligence Oversight
+MPTO 00-33A-1001, General Cyberspace Support Activities--Communications Inspection Policy Program
+MPTO 00-33A-1001, General Cyberspace Support Activities--Electrostatic Discharge (ESD)  //No HHQ reporting requirement for CCIP//
+ACCI 17-202 Vol 1 Cybercrew Training [91 COS]
+ACCI 17-202 Vol 3 Cybercrew Operations and Procedures
+Xend
+
++May
+AFMAN 17-1301 Computer Security
+MPTO 00-33A-1001, General Cyberspace Support Activities--Cyberspace Support Technical Publications Management  //No HHQ reporting requirement for CCIP//
+MPTO 00-33A-1001, General Cyberspace Support Activities--Tools Management  //No HHQ reporting requirement for CCIP//
+MPTO 00-33A-1001, General Cyberspace Support Activities--Corrosion Prevention and Control Program  //No HHQ reporting requirement for CCIP//
+Xend
+
++June
+DODM 5105.21 - SSO Self-Assessment ACC SAC
+DoDI O-2000.16 V.1_AFI 10-245-O, Antiterrorism (ATR) Program Implementation
+AFI 90-6001 Sexual Assault Prevention and Response (SAPR) Program - Squadron Commander or Equivalent
+ACCI 17-202 Vol 2 Cybercrew Stan Eval Program (Sqdn)
+AFI 10-701 Operations Security (Unit level)
+Xend
+
++July
+AFI 10-201 - Force Readiness Reporting (Unit Responsibilities)
+AFI 48-122 Deployment Health, Unit Commander
+AFI 48-133 Duty Limiting Conditions - Unit Commander
+AFI 10-250 Individual Medical Readiness- Unit Commander
+AFI 10-403 Deployment Planning and Execution (Effective: 17 Apr 20)
+Xend
+
++August
+Government Travel Card Cross Functional APC HL4-7
+Resource Management Communicator for Commanders, Resource Center Managers, and Resource Advisors
+AFMAN 11-415 Weapons and Tactics Program ACC SAC
+Xend
+
++September
+AFI 36-2670 Unit Training Program
+2021 67 CW Safety Program
+AFI 33-322 Records Management and Information Governance Program - Commanders or Commander's Designated POC
+Commander Support Staff Revitalization
+67 CW Unit Self Assessment Program Manager (SAPM)
+Xend
+
++October
+MPTO 00-33A-1001, General Cyberspace Support Activities--Quality Assurance
+DAFI 36-3107 Voting Assistance Program - Unit Level
+AFI 10-2501, AF Emergency Management Program - Unit Level
+Xend
+
++November
+AFI 10-701 Operations Security (Unit level)
+AFMAN 17-1301 Computer Security
+Xend
+
++December
+DODM 5105.21 - SSO Self-Assessment ACC SAC
+DoDI O-2000.16 V.1_AFI 10-245-O, Antiterrorism (ATR) Program Implementation
+Xend
