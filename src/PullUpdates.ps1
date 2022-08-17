@@ -84,8 +84,9 @@ function Write-ProgramDetails{
     Write-Host $program[1] "|" $program[2] "|" $program[3] "|" $program[4] "`n"
 }
 
-function Check-Files2{
+function Check-Files{
     Write-Host -ForegroundColor DarkGray "`nLocating https://mict.cce.af.mil/ Excel files on local machine."
+    $found = $true
     # test if documents exist in script dir
     if (-not ((Test-Path -Path $dash_path) -and (Test-Path -Path $poc_path))){
         # if they do not, copy them from the downloads folder if they exist
@@ -93,10 +94,12 @@ function Check-Files2{
             Copy-DownloadedFiles
         # otherwise, proceed to download from the web
         } else {
+            $found = $false
             Download-Files
         }
-    } else {
-        # if files found, ask user if they want to grab new ones anyway
+    }
+    # if files found, ask user if they want to grab new ones anyway
+    if ($found -eq $true){
         $option = Read-Host "Files found in script directory are from" (Get-Item $dash_path).LastWriteTime "and" (Get-Item $poc_path).LastWriteTime ". Do you want to grab new files? (Y/N)"
         if ($option -eq "y" -or $option -eq "Y" -or $option -eq "yes"){
             Download-Files
@@ -125,22 +128,6 @@ function Download-Files{
     # when found, copy to script dir then proceed
     Copy-DownloadedFiles
     Write-Host -ForegroundColor Green "`r`nFound files. Proceeding..."
-}
-
-function Check-Files{
-    Write-Host -ForegroundColor DarkGray "`nLocating necessary Excel files from https://mict.cce.af.mil/"
-    # test if documents exist in ShareDrive
-    if (-not ((Test-Path -Path $dash_path) -and (Test-Path -Path $poc_path))){
-        # if not, open two tabs to relevant MICT pages to download files and prompt user action
-        Write-Host -ForegroundColor DarkYellow  "`r`nYou either do not have the most recent MICT data downloaded or are missing documents, opening your browser to MICT now. Press the ""Export to Excel"" buttons on each tab that opens, then press ENTER when both documents have been saved to Downloads (default location)..."
-        Read-Host "Press ENTER"
-        # while path still can't be found
-        while (-not ((Test-Path -Path $dash_path) -and (Test-Path -Path $poc_path))){
-            Write-Host -ForegroundColor DarkYellow  "`r`nStill could not find file paths to Downloads\(FOUO)91 COS-UnitWorkcenterDashboard-"$date ".xlsx or Downloads\(ForOfficialUseOnly)91 COSChecklistPOCReport.xlsx"
-            Read-Host "Press ENTER"
-        }
-# if found, proceed
-    } else { Write-Host -ForegroundColor Green "`r`nFound files in Downloads."}
 }
 
 function Write-SAS{
@@ -201,7 +188,7 @@ function Write-FullSAS{
 # =================== Begin Script =====================
 
 # ensure files exist in Downloads, otherwise open Chrome
-Check-Files2
+Check-Files
 
 # open the excel files from Downloads, then create cells objects for each
 Write-Host -ForegroundColor DarkGray -NoNewline "`r`nOpening files... "
