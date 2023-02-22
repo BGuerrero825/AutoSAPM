@@ -1,7 +1,12 @@
 # 1st Lt Brian Guerrero
-# PullUpdates version 1.0
+# PullUpdates version 1.6
 
 # PowerShell online Documentation: https://docs.microsoft.com/en-us/powershell/module/Microsoft.PowerShell.Core/?view=powershell-7.2
+
+# TODO 
+# Red/Green dates and program name in printed SAS if they have been assessed for the month
+# ----- Replace program string when a new one is parsed
+# Add "Unassigned" category in SAS print for programs parsed in excel sheet but not in SAS.txt
 
 # SCRIPT TITLE
 Write-Host -ForegroundColor DarkGray " ______   __  __   __       __         
@@ -34,6 +39,7 @@ $poc_url = "https://mict.cce.af.mil/MICTReports/ReportChecklistPOC.aspx"
 $programs = @()
 $excel = New-Object -com "Excel.Application"
 $date = Get-Date -Format yyyyMMdd
+
 # Filepaths
 $downloads_path = (New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path
 $downloads_dash_path = $downloads_path + "\(FOUO)91 COS-UnitWorkcenterDashboard-" + $date + ".xlsx"
@@ -47,10 +53,10 @@ $sas_path = "$PSScriptRoot" + "\SAS.txt"
 # Helper Functions
 
 function Get-Program{
-# Get a program in the programs collection based on either name or index
+# Get a program from the programs collection based on name
     param($name, $index)
     foreach ($p in $programs){
-        if($p[0] -eq $name){
+        if($p[0] -like "*$name*"){
             return $p
         }
     }
@@ -58,7 +64,7 @@ function Get-Program{
 }
 
 function Get-ProgramIndex{
-# Get a program index in the programs collection based on either name
+# Get a program index from the programs collection using a program name
     param($name)
     $i = 0
     foreach ($p in $programs){
@@ -72,15 +78,20 @@ function Get-ProgramIndex{
 
 function Copy-DownloadedFiles{
     # moves files from downloads directory to script src directory
+    Remove-Item .\*UnitWorkcenterDashboard*
+    Remove-Item .\*ChecklistPOCReport*
     Copy-Item $downloads_dash_path -Destination $dash_path
     Copy-Item $downloads_poc_path -Destination $poc_path
     Write-Host -ForegroundColor DarkGray "Copied files over to script directory."
 }
 
-function Write-ProgramDetails{
+function Print-ProgramDetails{
 # given a program collection, print details to specified format
     param($program)
-    Write-Host -BackgroundColor DarkCyan $program[0]
+    if ($program -eq $null){
+        return
+    }
+    Write-Host -ForegroundColor Cyan $program[0]
     Write-Host $program[1] "|" $program[2] "|" $program[3] "|" $program[4] "`n"
 }
 
@@ -88,6 +99,7 @@ function Check-Files{
     Write-Host -ForegroundColor DarkGray "`nLocating https://mict.cce.af.mil/ Excel files on local machine."
     $found = $true
     # test if documents exist in script dir
+    Write-Host $dash_path ", " $poc_path
     if (-not ((Test-Path -Path $dash_path) -and (Test-Path -Path $poc_path))){
         # if they do not, copy them from the downloads folder if they exist
         if ((Test-Path -Path $downloads_dash_path) -and (Test-Path -Path $downloads_poc_path)){ 
@@ -100,7 +112,8 @@ function Check-Files{
     }
     # if files found, ask user if they want to grab new ones anyway
     if ($found -eq $true){
-        $option = Read-Host "Files found in script directory are from" (Get-Item $dash_path).LastWriteTime "and" (Get-Item $poc_path).LastWriteTime ". Do you want to grab new files? (Y/N)"
+    Write-Host -ForegroundColor Green "Files found in script directory are from" (Get-Item $dash_path).LastWriteTime "and" (Get-Item $poc_path).LastWriteTime "."
+        $option =  Read-Host "Do you want to grab new files? (Y/N)"
         if ($option -eq "y" -or $option -eq "Y" -or $option -eq "yes"){
             Download-Files
         }
@@ -109,8 +122,6 @@ function Check-Files{
 
 function Download-Files{
     # remove old MICT files in downloads
-    Remove-Item .\*UnitWorkcenterDashboard*
-    Remove-Item .\*ChecklistPOCReport*
     $to_remove = Join-Path $downloads_path '\*UnitWorkcenterDashboard*'
     Remove-Item $to_remove
     $to_remove = Join-Path $downloads_path '\*ChecklistPOCReport*'
@@ -130,56 +141,41 @@ function Download-Files{
     Write-Host -ForegroundColor Green "`r`nFound files. Proceeding..."
 }
 
+# Print all programs related to current and next SAS month, optionally print all months
 function Write-SAS{
-    # Print all programs related to current and next SAS month
-    $month = Get-Date
+    param($full)
+    $current_month = Get-Date
     $next_month = (Get-Date).AddMonths(1)
-    $month_name = (Get-Culture).DateTimeFormat.GetMonthName($month.Month)
+    $current_month_name = (Get-Culture).DateTimeFormat.GetMonthName($current_month.Month)
     $next_month_name = (Get-Culture).DateTimeFormat.GetMonthName($next_month.Month)
 
     $current = 0
     # iterate through SAS text file
     foreach($line in (Get-Content $sas_path)){
-        # if in a month that string matched month or next month, print all programs until end found
-        if($current -eq 1){
-            if($line -like "Xend*"){
-                $current = 0
-            }else{
-            $program = Get-Program -name $line
-            Write-ProgramDetails -program $program
-            }  
-        } 
-        # else if not in a month, look for a months signifier, and print name if found
-        elseif($line -like '+*'){
-            if ($line.Substring(1) -eq $month_name){
-                $current = 1
-                Write-Host "----------------------" $month_name "----------------------" "`n"
-            } elseif ($line.Substring(1) -eq $next_month_name){
-                $current = 1
-                Write-Host "----------------------" $next_month_name "----------------------" "`n"
-            }
-        }
-    }
-}
-
-function Write-FullSAS{
-    $current = 0
-    # iterate throus SAS text file
-    foreach($line in(Get-Content $sas_path)){
-        # if in any month print programs until end found
-        if($current -eq 1){
-            if($line -like "Xend*"){
-                $current = 0
-            }else{
-                $program = Get-Program -name $line
-                Write-ProgramDetails -program $program
-            }
-        }
-        # else if not in a month, look for any month signifier, and print name if found
-        elseif($line -like '+*'){
+        # if month listed (denoted with a leading '-')
+        if($line.StartsWith("-")){
+            $current = 0
             $month_name = $line.Substring(1, $line.Length-1)
-            $current = 1
-            Write-Host "----------------------" $month_name "----------------------" "`n"
+            # if the month is the current or next month, print specially highlighted
+            if($line.Substring(1) -eq $current_month_name -or $line.Substring(1) -eq $next_month_name){
+                $current = 1
+                Write-Host "`n"
+                Write-Host -BackgroundColor DarkCyan "----------------------" $month_name "----------------------"
+            # else print other months if full selected
+            } elseif ($full) {
+                Write-Host "`n"
+                Write-Host -BackgroundColor DarkGray "----------------------" $month_name "----------------------"
+            }
+        # if the line isn't blank or commented, and is needed for current SAS scope, check for a program name and print
+        } elseif($line -ne '' -and $line -ne ' ' -and (-not $line.StartsWith('#')) -and ($current -eq 1 -or $full)) {
+            $program = Get-Program -name $line
+            if ($program -eq $null){
+                Write-Host -ForegroundColor Red "Couldn't find match for program '$line'. Try editing keywords in SAS.txt. `n"
+            } else {
+            Print-ProgramDetails -program $program
+            }
+        } else {
+            #do nothing if line is blank or commented
         }
     }
 }
@@ -190,7 +186,7 @@ function Write-FullSAS{
 # ensure files exist in Downloads, otherwise open Chrome
 Check-Files
 
-# open the excel files from Downloads, then create cells objects for each
+# open the excel files from Downloads, then create cells objects for each file
 Write-Host -ForegroundColor DarkGray -NoNewline "`r`nOpening files... "
 $dash = $excel.Workbooks.open($dash_path)
 $pocs = $excel.Workbooks.open($poc_path)
@@ -206,35 +202,40 @@ while(($pocs_cells.item($i, 5).text) -ne ""){
     $program_name = $pocs_cells.item($i, 5).text
     $poc1 = $pocs_cells.item($i, 7).text
     $poc2 = $pocs_cells.item($i, 9).text
-    $assessed = "None Found"
-    $validated = "None Found"
+    $assessed = $null
+    $validated = $null
     $programs += ,@($program_name, $poc1, $poc2, $assessed, $validated)
+    $programs[$i-2][1] = if($poc1 -ne ''){$poc1} else{'VACANT'}
+    $programs[$i-2][2] = if($poc2 -ne ''){$poc2} else{'VACANT'}
     $i += 1
 }
 # parse programs in Dashboard sheet and insert new data to existing objects in programs array
 $j = 3
 while(($dash_cells.item($j, 2).text) -ne ""){
+    # skip this row if there is no assessment (this is a header row)
     if(($dash_cells.item($j, 3).text) -eq ""){
-        
+        $j += 1
+        continue
     }
-    else{
-        $k = Get-ProgramIndex -name ($dash_cells.item($j, 2).text)
-        $assessed = $dash_cells.item($j, 10).text
-        $validated = $dash_cells.item($j, 11).text
-        $programs[$k][3] = $assessed
-        $programs[$k][4] = $validated 
-    }
+    $k = Get-ProgramIndex -name ($dash_cells.item($j, 2).text)
+    $assessed = $dash_cells.item($j, 10).text
+    $validated = $dash_cells.item($j, 12).text
+    $programs[$k][3] = if($assessed -ne ''){$assessed} else{'NO DATE'}
+    $programs[$k][4] = if($validated -ne ''){$validated} else{'NO DATE'}
     $j += 1
 }
+
 Write-Host "Data is ready."
+
 # close excel session when finished
 $excel.quit()
 [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel)
 [GC]::Collect()
+
 # print out programs
 Write-SAS
 Read-Host "Press ENTER to print full SAS"
-Write-FullSAS
+Write-SAS -full $true
 
 # TODO: create SAS month in excel table for easy copy paste to powerpoint 
 Read-Host "Press ENTER to exit."
