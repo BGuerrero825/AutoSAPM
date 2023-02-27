@@ -50,11 +50,11 @@ $poc_path = $src_path + "\(ForOfficialUseOnly)91 COSChecklistPOCReport.xlsx"
 $sas_path = "$PSScriptRoot" + "\SAS.txt"
 
 
-# Helper Functions
+# Helper Functions +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 function Get-Program{
 # Get a program from the programs collection based on name
-    param($name, $index)
+    param($name)
     foreach ($p in $programs){
         if($p[0] -like "*$name*"){
             return $p
@@ -87,12 +87,46 @@ function Copy-DownloadedFiles{
 
 function Print-ProgramDetails{
 # given a program collection, print details to specified format
-    param($program)
+    param($program, $checkDates)
     if ($program -eq $null){
         return
     }
     Write-Host -ForegroundColor Cyan $program[0]
-    Write-Host $program[1] "|" $program[2] "|" $program[3] "|" $program[4] "`n"
+    Write-Host -NoNewline " | "
+
+    for($i=1; $i -lt $program.Length; $i++){
+        # check if a field is empty, and highlight red VACANT if so
+        if($program[$i] -match "^s*$" ){
+            Write-Host -NoNewline -BackgroundColor Red "VACANT"
+        } # if checking dates, generate raw date values and color text if due for assessment or validation
+        elseif ($checkDates -and $i -eq 3) {
+            $assessWindow = (Get-Date -Day 1 -Hour 0 -Minute 0 -Second 0).AddMonths(-1)
+            $rawAssessDate = [datetime]::ParseExact($program[3], 'MM/dd/yyyy',$null)
+            $rawValidateDate = [datetime]::ParseExact($program[4], 'MM/dd/yyyy',$null)
+            #if assessment is due, print red assessment only
+            if ($rawAssessDate -lt $assessWindow){
+                Write-Host -NoNewline -ForegroundColor Red $program[$i]
+                Write-Host -NoNewline " | "
+                Write-Host -NoNewline $program[$i+1]
+            #if assessment is done, and validation is needed, then print yellow assessment only
+            } elseif ($rawValidateDate -lt $rawAssessDate) {
+                Write-Host -NoNewline $program[$i]
+                Write-Host -NoNewline " | "
+                Write-Host -NoNewline -ForegroundColor Yellow $program[$i+1]
+            #else print normally
+            } else {
+                Write-Host -NoNewline $program[$i]
+                Write-Host -NoNewline " | "
+                Write-Host -NoNewline $program[$i+1]
+            }
+            # jump $i up 1 iteration, since both dates have already been printed
+            $i += 1
+        # else, print normally
+        } else { Write-Host -NoNewline $program[$i] }
+        Write-Host -NoNewline " | "
+    }
+
+    Write-Host "`n" 
 }
 
 function Check-Files{
@@ -148,37 +182,46 @@ function Write-SAS{
     $next_month = (Get-Date).AddMonths(1)
     $current_month_name = (Get-Culture).DateTimeFormat.GetMonthName($current_month.Month)
     $next_month_name = (Get-Culture).DateTimeFormat.GetMonthName($next_month.Month)
+    $current = $false
 
-    $current = 0
-    # iterate through SAS text file
+    # print a legend for reference
+    Write-Host "`n"
+    Write-Host -BackgroundColor DarkYellow "---------------------- LEGEND ----------------------"
+    Write-Host " | Primary Manager | Alternate Manager | Last Assessment (RED if due) | Last Validation (YELLOW if due) |"
+    # iterate through SAS text file line by line
     foreach($line in (Get-Content $sas_path)){
         # if month listed (denoted with a leading '-')
         if($line.StartsWith("-")){
-            $current = 0
+            $current = $false
             $month_name = $line.Substring(1, $line.Length-1)
             # if the month is the current or next month, print specially highlighted
             if($line.Substring(1) -eq $current_month_name -or $line.Substring(1) -eq $next_month_name){
-                $current = 1
+                $current = $true
                 Write-Host "`n"
                 Write-Host -BackgroundColor DarkCyan "----------------------" $month_name "----------------------"
-            # else print other months if full selected
+            # else print all other months normally if printing full SAS
             } elseif ($full) {
                 Write-Host "`n"
                 Write-Host -BackgroundColor DarkGray "----------------------" $month_name "----------------------"
             }
         # if the line isn't blank or commented, and is needed for current SAS scope, check for a program name and print
-        } elseif($line -ne '' -and $line -ne ' ' -and (-not $line.StartsWith('#')) -and ($current -eq 1 -or $full)) {
+        } elseif($line -ne '' -and $line -ne ' ' -and (-not $line.StartsWith('#')) -and ($current -or $full)) {
             $program = Get-Program -name $line
+            # if the program could not be found, print an error; else print the program
             if ($program -eq $null){
                 Write-Host -ForegroundColor Red "Couldn't find match for program '$line'. Try editing keywords in SAS.txt. `n"
-            } else {
-            Print-ProgramDetails -program $program
-            }
+            # if the program is in the current month, also check the dates
+            } elseif($current) {
+                Print-ProgramDetails -program $program -checkDates $true
+            # else print normally, without checking dates
+            } else { Print-ProgramDetails -program $program }
         } else {
-            #do nothing if line is blank or commented
+            # do nothing if line is blank or commented
         }
     }
 }
+
+# End Helper Functions +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 # =================== Begin Script =====================
@@ -205,8 +248,6 @@ while(($pocs_cells.item($i, 5).text) -ne ""){
     $assessed = $null
     $validated = $null
     $programs += ,@($program_name, $poc1, $poc2, $assessed, $validated)
-    $programs[$i-2][1] = if($poc1 -ne ''){$poc1} else{'VACANT'}
-    $programs[$i-2][2] = if($poc2 -ne ''){$poc2} else{'VACANT'}
     $i += 1
 }
 # parse programs in Dashboard sheet and insert new data to existing objects in programs array
